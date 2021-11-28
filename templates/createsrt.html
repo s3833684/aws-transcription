@@ -1,0 +1,108 @@
+{% extends "bootstrap/base.html" %}
+{% block html_attribs %} lang="en"{% endblock %}
+
+{% block head %}
+    <meta charset="UTF-8">
+    <title>
+        Amazon Transcribe to SRT Converter
+    </title>
+    <style>
+        * {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        a:link,
+        a:visited {
+            color: blue; 
+        }
+    </style>
+    <style>
+    body.hidden {
+        display:none;
+    }
+    </style>
+    <script>
+        function createSRT() {
+            document.getElementById("srt").value = "WEBVTT \n\n";
+            var start_time = "";
+            var end_time = "";
+            var sentence = "";
+            var n = 1;
+            var t = 1;
+			var wtb = parseInt(document.getElementById("words").value);
+
+            var j = JSON.parse(document.getElementById("txt").value);
+            var c = j.results.items.length;
+            for (i = 0; i < c; i++) {
+                if (j.results.items[i].type == "pronunciation") {
+                    if (start_time == "") start_time = j.results.items[i].start_time;
+                    end_time = j.results.items[i].end_time;
+                    sentence += j.results.items[i].alternatives[0].content + " ";
+                    t++;
+                }
+                else if (j.results.items[i].type == "punctuation" && j.results.items[i].alternatives[0].content == ".") {
+                    //document.getElementById("srt").value += n + "\n";
+                    document.getElementById("srt").value += formatTime(start_time) + " --> " + formatTime(end_time) + "\n" + sentence + "\n\n";
+                    sentence = "";
+                    start_time = "";
+                    n++;
+                    t = 1;
+                }
+                if(document.getElementById("word-break").checked && t > wtb){
+                    //document.getElementById("srt").value += n + "\n";
+                    document.getElementById("srt").value += formatTime(start_time) + " --> " + formatTime(end_time) + "\n" + sentence + "\n\n";
+                    sentence = "";
+                    start_time = "";
+                    n++;
+                    t = 1;
+                }
+            }
+            document.getElementById("srtform").submit()
+        }
+
+        function formatTime(t) {
+            dutation = t * 1000;
+            function pad(n, z) {
+                z = z || 2;
+                return ('00' + n).slice(-z);
+            }
+            var s = t * 1000;
+            var ms = s % 1000;
+            s = (s - ms) / 1000;
+            var secs = s % 60;
+            s = (s - secs) / 60;
+            var mins = s % 60;
+            var hrs = (s - mins) / 60;
+
+        return  pad(hrs) + ':' + pad(mins) + ':' + pad(secs) + '.' + pad(ms, 3);
+        }   
+    </script>
+{% endblock %}
+
+{% block content %}
+    <body onload="createSRT()" class="hidden">
+        <div style="text-align: center;">
+            <h1>Convert Amazon Transcribe JSON to SRT</h1>
+            This page lets you create subtitles in SRT format from the JSON output of Amazon Transscribe API. The page is standalone
+            and uses vanilla JavaScript.
+            <br> New sentence is created when a period is encountered. Paste the Amazon Transcribe JSON below
+            <br>
+            <br>
+            <textarea id="txt" style="width: 800px; height: 300px; border: 1px solid black;" style="display:none;">{{ content }}</textarea>
+            <br>
+            <br>
+            <input type="checkbox" id="word-break" checked="checked"> Break after <input type="text" size="2" value="10" id="words"> words &nbsp;&nbsp;&nbsp;&nbsp; <input type="button" value="Create SRT" style="width: 120px;" onclick="createSRT()">
+            <br>
+            <br>
+            <textarea id="srt" style="width: 800px; height: 500px; border: 1px solid black;" form="srtform" name="key"></textarea>
+            <br>
+            
+            <br> Created by
+            <a href="http://www.yash.info/blog" target="_blank">Yash</a>. Also check out <a href="https://www.hexavault.com" target="_blank">HexaVault</a> and <a href="https://www.uconomix.com/Products/uMark/Default.aspx" target="_blank">uMark</a>.
+            <br><br>
+        </div>
+    </body>
+    <form id="srtform" action="{{ url_for('subtitle', job_name = job_name )}}" method="POST" name="key">
+    </form>
+{% endblock %}

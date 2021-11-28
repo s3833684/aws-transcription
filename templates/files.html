@@ -1,0 +1,87 @@
+{% extends "bootstrap/base.html" %}
+{% block html_attribs %} lang="en"{% endblock %}
+{% block title %}S3 Object List{% endblock %}
+
+{% block head %}
+  {{super()}}
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.8/css/solid.css" integrity="sha384-v2Tw72dyUXeU3y4aM2Y0tBJQkGfplr39mxZqlTBDUZAb9BGoC40+rdFCG0m10lXk" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.8/css/fontawesome.css" integrity="sha384-q3jl8XQu1OpdLgGFvNRnPdj5VIlCvgsDQTQB6owSOHWlAurxul7f+JpUOVdAiJ5P" crossorigin="anonymous">
+  <link rel="stylesheet" href="/static/styles.css">
+{% endblock %}
+
+
+
+{% block content %}
+  <div class="container" id="container">
+    <div class="col-12-xs">
+      <h3>ITIS Project Files Page</h3>
+      
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <p class="bg-info" style="padding: 15px;">
+          {% for message in messages %}
+            {{ message }}<br>
+          {% endfor %}
+          </p>
+        {% endif %}
+      {% endwith %}
+      <hr>
+
+      <form class="upload-form" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
+        <p><input type="file" name="file" accept=".mp4"></p>
+        <button type="submit" class="btn btn-primary">Upload</button>
+        <p> 
+          p.s. you cannot upload files which have the same name with existed files
+        </p> 
+      </form>
+      <hr>
+     
+
+      <table class="table table-striped">
+        <tr>
+          <th>Filename</th>
+          <th>Upload Date</th>
+          <th>Size</th>
+          <th></th>
+          <th></th>
+        </tr>
+        {% for f in files %}
+        <tr>
+          <td>{{ f.key }}</td>
+          <td>{{ f.last_modified | datetimeformat }}</td>
+          <td>{{ f.size | sizeof_fmt}}</td>
+          <td>
+            <td class="td-buttons">
+            <form class="play-form" action="{{ url_for('player') }}" method="POST">
+              <input type="hidden" name="key" value="{{ f.key }}">
+              <button type="submit" class="btn btn-primary" title="play video">
+                <i class="fas fa-play"></i>
+              </button>
+            </form>
+            <form class="transcribe-form" action="{{ url_for('loading') }}" method="POST">
+              <input type="hidden" name="key" value="{{ f.key }}">
+              <button type="submit" class="btn btn-warning" title="transcribe the video">
+                <i class="fas fa-file-alt"></i>
+              </button>
+            </form>
+            <form class="download-form" action="{{ url_for('download') }}" method="POST">
+              <input type="hidden" name="key" value="{{ f.key }}">
+              <button type="submit" class="btn btn-default btn-sm" title="download transcript">
+                <i class="fa fa-download"></i>
+              </button>
+            </form>
+            <form class="delete-form" action="{{ url_for('delete') }}" method="POST">
+              <input type="hidden" name="key" value="{{ f.key }}">
+              <button type="submit" class="btn btn-danger btn-sm" title="delete file">
+                <i class="fa fa-trash-alt"></i>
+              </button>
+            </form>
+            </td>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+
+    </div>
+  </div>
+{% endblock %}
